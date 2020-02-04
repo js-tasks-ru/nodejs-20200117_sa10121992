@@ -1,6 +1,7 @@
 const url = require('url');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 
 const server = new http.Server();
 
@@ -11,7 +12,14 @@ server.on('request', (req, res) => {
 
   switch (req.method) {
     case 'GET':
-
+      fs.stat(filepath, (err) => {
+        if (err) {
+          res.statusCode = /\//.test(pathname) ? 400 : 404;
+          res.end('');
+        } else {
+          fs.createReadStream(filepath).pipe(res);
+        }
+      });
       break;
 
     default:
