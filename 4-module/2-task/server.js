@@ -29,19 +29,20 @@ server.on('request', (req, res) => {
         }
 
         const limitedStream = new LimitSizeStream({limit: 1024 * 1024});
-        const file = fs.createWriteStream(filepath);
+        const file = fs.createWriteStream(filepath, {flags: 'wx'});
 
         req
             .pipe(limitedStream)
             .on('error', () => {
-              req.destroy();
               file.destroy();
+
+              fs.unlink(filepath, () => {});
 
               res.statusCode = 413;
               res.end('File limit exceeded');
             })
             .pipe(file)
-            .on('finish', () => {
+            .on('close', () => {
               res.statusCode = 201;
               res.end();
             });
