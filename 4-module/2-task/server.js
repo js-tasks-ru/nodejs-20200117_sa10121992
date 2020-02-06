@@ -11,7 +11,41 @@ server.on('request', (req, res) => {
 
   switch (req.method) {
     case 'POST':
+      fs.stat(filepath, (err) => {
+        if ( ! err) {
+          res.statusCode = 409;
+          res.end();
 
+          return;
+        }
+
+        if (/\//.test(pathname)) {
+          res.statusCode = 400;
+          res.end();
+
+          return;
+        }
+
+        const limitedStream = new LimitSizeStream({limit: 1024 * 1024});
+        const file = fs.createWriteStream(filepath);
+
+        req
+            .pipe(limitedStream)
+            .on('error', () => {
+              req.destroy();
+              file.destroy();
+
+              res.statusCode = 413;
+              res.end('File limit exceeded');
+            })
+            .pipe(file)
+            .on('finish', () => {
+              res.statusCode = 201;
+              res.end();
+            });
+
+        req.on('aborted', () => fs.unlink(filepath, (err) => err && console.log(err)));
+      });
       break;
 
     default:
