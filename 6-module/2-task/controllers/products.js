@@ -17,7 +17,7 @@ module.exports.productList = async function productList(ctx, next) {
 };
 
 module.exports.productById = async function productById(ctx, next) {
-  let product
+  let product;
 
   try {
     product = await Product.findById(ctx.params.id);
